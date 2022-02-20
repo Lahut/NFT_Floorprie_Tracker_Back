@@ -10,6 +10,26 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+app.get("/crypto-currency/price/:coin_name", async (req, res) => {
+    const browser = await puppeteer.launch();
+    let page = await browser.newPage();
+    await page.setUserAgent(
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36"
+    );
+    await page.goto(
+      `https://coinmarketcap.com/currencies/${req.params.coin_name}`
+    );
+    const price = await page
+      .evaluate(() => {
+        const price_ = document.querySelector(".priceValue span").innerHTML;
+        return price_;
+      })
+      .catch((err) => res.send(err));
+    const result = price.slice(1);
+    res.send(result);
+  });
+
+
 app.get("/floor-price/tofu/:projectname", async (req, res) => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -26,16 +46,24 @@ app.get("/floor-price/tofu/:projectname", async (req, res) => {
         ".chakra-stack.css-1b4dbfl:nth-child(5) div:nth-child(2)"
       ).innerHTML;
       const name_ = document.querySelector(".css-e2is9f").innerText;
-
       const projectobject = {
         name: name_,
         price: price_,
         c_currency: "bnb",
       };
       return projectobject;
-    })
-    .catch((err) => res.send(err));
-  res.send(projectDetail);
+    }).catch((err) => res.send(err));
+
+
+    await page.goto(`https://coinmarketcap.com/currencies/${projectDetail.c_currency}`)
+    const fprice  = await page.evaluate(  () => {
+         const price_ = document.querySelector(".priceValue span").innerHTML;
+         return price_ 
+    }).catch( (err) => console.log(err))
+    projectDetail['usd_currency'] = parseFloat(fprice.slice(1))*parseFloat(projectDetail.price)
+    projectDetail['thb_currency'] = projectDetail['usd_currency']*32
+    res.send(projectDetail);
+    
 });
 
 app.get("/floor-price/opensea/:projectname", async (req, res) => {
@@ -62,27 +90,19 @@ app.get("/floor-price/opensea/:projectname", async (req, res) => {
       return projectobject;
     })
     .catch((err) => res.send("They change format of page"));
-  res.send(projectDetail);
+
+    await page.goto(`https://coinmarketcap.com/currencies/${projectDetail.c_currency}`)
+    const fprice  = await page.evaluate(  () => {
+         const price_ = document.querySelector(".priceValue span").innerHTML;
+         console.log(typeof price_)
+         return price_ .replace(",","")
+    }).catch( (err) => console.log(err))
+    projectDetail['usd_currency'] = parseFloat(fprice.slice(1)) * parseFloat(projectDetail.price)
+    projectDetail['thb_currency'] = projectDetail['usd_currency']*32
+    res.send(projectDetail);
 });
 
-app.get("/crypto-currency/price/:coin_name", async (req, res) => {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.setUserAgent(
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36"
-  );
-  await page.goto(
-    `https://coinmarketcap.com/currencies/${req.params.coin_name}`
-  );
-  const price = await page
-    .evaluate(() => {
-      const price_ = document.querySelector(".priceValue span").innerHTML;
-      return price_;
-    })
-    .catch((err) => res.send(err));
-  const result = price.slice(1);
-  res.send(result);
-});
+
 
 app.get("/fiat-currency/price/:fiat_name", async (req, res) => {
   // 1USD : fiat_name
