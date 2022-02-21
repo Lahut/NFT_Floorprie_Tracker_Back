@@ -33,6 +33,7 @@ app.get("/crypto-currency/price/:coin_name", async (req, res) => {
 app.get("/floor-price/tofu/:projectname", async (req, res) => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
+  const urlProject = `https://tofunft.com/collection/${req.params.projectname}/items`
 
   await page.setUserAgent(
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36"
@@ -62,6 +63,7 @@ app.get("/floor-price/tofu/:projectname", async (req, res) => {
     }).catch( (err) => console.log(err))
     projectDetail['usd_currency'] = parseFloat(fprice.slice(1))*parseFloat(projectDetail.price)
     projectDetail['thb_currency'] = projectDetail['usd_currency']*32
+    projectDetail['url_project'] = urlProject
     res.send(projectDetail);
     
 });
@@ -69,6 +71,7 @@ app.get("/floor-price/tofu/:projectname", async (req, res) => {
 app.get("/floor-price/opensea/:projectname", async (req, res) => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
+  const urlProject = `https://opensea.io/collection/${req.params.projectname}`
 
   await page.setUserAgent(
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36"
@@ -99,6 +102,7 @@ app.get("/floor-price/opensea/:projectname", async (req, res) => {
     }).catch( (err) => console.log(err))
     projectDetail['usd_currency'] = parseFloat(fprice.slice(1)) * parseFloat(projectDetail.price)
     projectDetail['thb_currency'] = projectDetail['usd_currency']*32
+    projectDetail['url_project'] = urlProject
     res.send(projectDetail);
 });
 
